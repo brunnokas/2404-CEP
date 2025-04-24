@@ -4,45 +4,10 @@ import json
 
 # Configuração da página
 st.set_page_config(page_title="Busca CEP", page_icon=":postbox:", layout="wide")
-st.markdown(
-    """
-    <style>
-        .main-header {
-            font-size: 36px;
-            font-weight: bold;
-            color: #4CAF50;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .stTextInput>div>div>input {
-            font-size: 18px;
-            padding: 10px;
-        }
-        .stButton>button {
-            background-color: #4CAF50;
-            color: white;
-            font-size: 16px;
-            padding: 10px 20px;
-            border-radius: 5px;
-        }
-        .stButton>button:hover {
-            background-color: #45a049;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+st.title("📬 Consulta de CEP")
 
-# Cabeçalho
-st.markdown('<div class="main-header">Consulta de CEP</div>', unsafe_allow_html=True)
-
-# Função para buscar CEP
+# Função para buscar o CEP
 def buscar_cep(cep):
-    """
-    Busca informações de um CEP usando a API ViaCEP.
-    Veja em https://viacep.com.br/ para mais detalhes sobre a API.
-    Retorna um dicionário com os dados do CEP ou None em caso de erro.
-    """
     try:
         r = requests.get(f'https://viacep.com.br/ws/{cep}/json/')
         r.raise_for_status()
@@ -55,10 +20,9 @@ def buscar_cep(cep):
         st.error("Erro ao decodificar a resposta JSON.")
         return None
 
-# Função para exibir o resultado
+# Função para exibir os dados
 def exibir_resultado(data):
-    """Exibe os dados do CEP de forma elegante."""
-    st.subheader("Resultado da Busca:")
+    st.subheader("📦 Resultado da Busca:")
     st.markdown(f"**CEP:** {data['cep']}")
     st.markdown(f"**Logradouro:** {data['logradouro']}")
     if data.get('complemento'):
@@ -66,32 +30,60 @@ def exibir_resultado(data):
     st.markdown(f"**Bairro:** {data['bairro']}")
     st.markdown(f"**Cidade:** {data['localidade']}")
     st.markdown(f"**UF:** {data['uf']}")
+    st.markdown(f"**DDD:** {data['ddd']}")
 
-# Layout
-st.markdown("---")
+# Estilo visual
+st.markdown(
+    """
+    <style>
+    .stTextInput > div > div > input {
+        font-size: 18px;
+        padding: 10px;
+    }
+    .stButton > button {
+        font-size: 16px;
+        padding: 8px 16px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Layout de entrada
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    cep_p = st.text_input("Digite o CEP:", "", max_chars=8, placeholder="Exemplo: 01001000")
+    cep_p = st.text_input("Digite o CEP:", "").strip().replace("-", "").replace(" ", "")
 
 with col2:
-    buscar_clicado = st.button("Buscar CEP")
+    buscar_clicado = st.button("🔍 Buscar CEP")
 
-# Lógica de busca
+# Histórico de buscas
+if "historico" not in st.session_state:
+    st.session_state.historico = []
+
+# Quando o botão for clicado
 if buscar_clicado:
     if cep_p.isdigit() and len(cep_p) == 8:
-        resultado = buscar_cep(cep_p)
+        with st.spinner("🔄 Buscando informações..."):
+            resultado = buscar_cep(cep_p)
+
         if resultado and not resultado.get('erro'):
             exibir_resultado(resultado)
+
+            if resultado['cep'] not in st.session_state.historico:
+                st.session_state.historico.append(resultado['cep'])
+
         elif resultado and resultado.get('erro'):
-            st.warning("CEP não encontrado. Verifique e tente novamente.")
+            st.warning("🚫 CEP não encontrado.")
     elif cep_p:
-        st.warning("Digite um CEP válido com 8 dígitos.")
+        st.warning("⚠️ Digite um CEP válido com 8 dígitos numéricos.")
+
+# Histórico de CEPs consultados
+if st.session_state.historico:
+    st.markdown("### 🕘 Histórico de CEPs Consultados:")
+    for cep in reversed(st.session_state.historico[-5:]):  # Mostra os últimos 5
+        st.markdown(f"- {cep}")
 
 # Rodapé
-st.markdown("---")
-st.info("API de consulta de CEP utilizada: ViaCEP")
-st.markdown(
-    '<div style="text-align: center; font-size: 14px;">Desenvolvido com ❤️ usando Streamlit</div>',
-    unsafe_allow_html=True,
-)
+st.info("🔗 API utilizada: [ViaCEP](https://viacep.com.br/)")
