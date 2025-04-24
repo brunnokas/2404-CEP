@@ -30,7 +30,7 @@ def exibir_resultado(data):
     st.markdown(f"**Bairro:** {data['bairro']}")
     st.markdown(f"**Cidade:** {data['localidade']}")
     st.markdown(f"**UF:** {data['uf']}")
-    st.markdown(f"**DDD:** {data['ddd']}")
+    
 
 # Estilo visual
 st.markdown(
