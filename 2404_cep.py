@@ -53,7 +53,8 @@ st.markdown(
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    cep_p = st.text_input("Digite o CEP:", "").strip().replace("-", "").replace(" ", "")
+    entrada = st.text_input("Digite o CEP:", "", max_chars=9)
+    cep_p = ''.join(filter(str.isdigit, entrada))[:8]  # Garante apenas até 8 dígitos numéricos
 
 with col2:
     buscar_clicado = st.button("🔍 Buscar CEP")
@@ -64,7 +65,7 @@ if "historico" not in st.session_state:
 
 # Quando o botão for clicado
 if buscar_clicado:
-    if cep_p.isdigit() and len(cep_p) == 8:
+    if cep_p and len(cep_p) == 8:
         with st.spinner("🔄 Buscando informações..."):
             resultado = buscar_cep(cep_p)
 
@@ -77,7 +78,7 @@ if buscar_clicado:
         elif resultado and resultado.get('erro'):
             st.warning("🚫 CEP não encontrado.")
     elif cep_p:
-        st.warning("⚠️ Digite um CEP válido com 8 dígitos numéricos.")
+        st.warning("⚠️ O CEP deve conter exatamente 8 números.")
 
 # Histórico de CEPs consultados
 if st.session_state.historico:
